@@ -1,0 +1,22 @@
+{
+  "name": "PublicArt-Storymap",
+  "homepage": "https://github.com/DaveBathnes/PublicArt-Storymap",
+  "authors": [
+    "Dave <dave_roweuk@yahoo.co.uk>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "lightbox2": "^2.8.2",
+    "font-awesome": "^4.6.3",
+    "leaflet": "v1.0.0-rc.3"
+  }
+}

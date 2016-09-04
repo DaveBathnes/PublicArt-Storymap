@@ -1,4 +1,4 @@
-var imageContainerMargin = 60;  // Margin + padding
+var imageContainerMargin = 70;  // Margin + padding
 
 // This watches for the scrollable container
 var scrollPosition = 0;
@@ -17,100 +17,89 @@ function initMap() {
     });
 
     // This displays a base layer map (other options available)
-    var lightAll = new L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibGlicmFyaWVzaGFja2VkIiwiYSI6IlctaDdxSm8ifQ.bxf1OpyYLiriHsZN33TD2A', {
+    var lightAll = new L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v9/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibGlicmFyaWVzaGFja2VkIiwiYSI6IlctaDdxSm8ifQ.bxf1OpyYLiriHsZN33TD2A', {
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
     }).addTo(map);
 
     // This customizes link to view source code; add your own GitHub repository
-    map.attributionControl
-    .setPrefix('View <a href="http://github.com/jackdougherty/leaflet-storymap" target="_blank">code on GitHub</a>, created with <a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>');
+    map.attributionControl.setPrefix('View <a href="http://github.com/jackdougherty/leaflet-storymap" target="_blank">code on GitHub</a>, created with <a href="http://leafletjs.com" title="A JS library for interactive maps">Leaflet</a>');
 
+    var markers = [];
     // This loads the GeoJSON map data file from a local folder
-    $.getJSON('map.js', function (data) {
-        var geojson = L.geoJson(data, {
-            onEachFeature: function (feature, layer) {
-                (function (layer, properties) {
-                    // This creates numerical icons to match the ID numbers
-                    // OR remove the next 6 lines for default blue Leaflet markers
-                    var numericMarker = L.ExtraMarkers.icon({
-                        icon: 'fa-number',
-                        number: feature.properties['id'],
-                        markerColor: 'blue'
-                    });
-                    layer.setIcon(numericMarker);
+    $.getJSON('https://data.bathhacked.org/resource/ku52-eiv3.json', function (data) {
+        $.each(data, function (i, art) {
+            if (art.location && art.location.coordinates) {
 
-                    // This creates the contents of each chapter from the GeoJSON data. Unwanted items can be removed, and new ones can be added
-                    var chapter = $('<p></p>', {
-                        text: feature.properties['chapter'],
-                        class: 'chapter-header'
-                    });
+                if (i == 0) map.setView([art.location.coordinates[1], art.location.coordinates[0]], 16);
 
-                    var image = $('<img>', {
-                        src: feature.properties['image'],
-                    });
+                var chapter = $('<p></p>', {
+                    text: art.title,
+                    class: 'chapter-header'
+                });
 
-                    var source = $('<a>', {
-                        text: feature.properties['source-credit'],
-                        href: feature.properties['source-link'],
-                        target: "_blank",
-                        class: 'source'
-                    });
+                var image = $('<img>', {
+                    src: 'http://www.bathnes.gov.uk/sites/default/files/publicart/fullsize/' + art.reference + '-a.jpg',
+                });
 
-                    var description = $('<p></p>', {
-                        text: feature.properties['description'],
-                        class: 'description'
-                    });
+                var source = $('<a>', {
+                    text: 'Copyright Bath and North East Somerset Council',
+                    href: 'http://www.bathnes.gov.uk/publicartcatalogue',
+                    target: "_blank",
+                    class: 'source'
+                });
 
-                    var container = $('<div></div>', {
-                        id: 'container' + feature.properties['id'],
-                        class: 'image-container'
-                    });
+                var description = $('<p></p>', {
+                    text: art.description,
+                    class: 'description'
+                });
 
-                    var imgHolder = $('<div></div>', {
-                        class: 'img-holder'
-                    });
+                var container = $('<div></div>', {
+                    id: 'container' + i,
+                    class: 'image-container'
+                });
 
-                    var imgLink = $('<a href="' + feature.properties['image'] + '" data-lightbox="image-' + feature.properties['id'] + '" data-title="' + feature.properties['source-credit'] + '"></a>');
-                    imgLink.append(image);
+                var imgHolder = $('<div></div>', {
+                    class: 'img-holder'
+                });
 
-                    imgHolder.append(imgLink);
+                var imgLink = $('<a href="' + 'http://www.bathnes.gov.uk/sites/default/files/publicart/fullsize/' + art.reference + '-a.jpg' + '" data-lightbox="image-' + i + '" data-title="' + art.title + '"></a>');
+                imgLink.append(image);
 
-                    container.append(chapter).append(imgHolder).append(source).append(description);
-                    $('#contents').append(container);
+                imgHolder.append(imgLink);
 
-                    var i;
-                    var areaTop = -100;
-                    var areaBottom = 0;
+                container.append(chapter).append(imgHolder).append(source).append(description);
+                $('#contents').append(container);
 
-                    // Calculating total height of blocks above active
-                    for (i = 1; i < feature.properties['id']; i++) {
-                        areaTop += $('div#container' + i).height() + imageContainerMargin;
+                var x;
+                var areaTop = -100;
+                var areaBottom = 0;
+
+                // Calculating total height of blocks above active
+                for (x = 1; x < i; x++) {
+                    areaTop += $('div#container' + x).height() + imageContainerMargin;
+                }
+
+                areaBottom = areaTop + $('div#container' + i).height();
+
+                $('div#contents').scroll(function () {
+                    if ($(this).scrollTop() >= areaTop && $(this).scrollTop() < areaBottom) {
+                        $('.image-container').removeClass("inFocus").addClass("outFocus");
+                        $('div#container' + i).addClass("inFocus").removeClass("outFocus");
+                        map.flyTo([art.location.coordinates[1], art.location.coordinates[0]], 18);
                     }
+                });
 
-                    areaBottom = areaTop + $('div#container' + feature.properties['id']).height();
-
-                    $('div#contents').scroll(function () {
-                        if ($(this).scrollTop() >= areaTop && $(this).scrollTop() < areaBottom) {
-                            $('.image-container').removeClass("inFocus").addClass("outFocus");
-                            $('div#container' + feature.properties['id']).addClass("inFocus").removeClass("outFocus");
-
-                            map.flyTo([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], feature.properties['zoom']);
-                        }
-                    });
-
-                    // Make markers clickable
-                    layer.on('click', function () {
-                        $("div#contents").animate({ scrollTop: areaTop + "px" });
-                    });
-
-                })(layer, feature.properties);
+                // Add the marker and make it clickable.
+                var marker = L.marker([art.location.coordinates[1], art.location.coordinates[0]]);
+                marker.on('click', function () {
+                    $("div#contents").animate({ scrollTop: areaTop + "px" });
+                });
+                markers.push(marker);
             }
         });
-
-        $('div#container1').addClass("inFocus");
+        var group = new L.featureGroup(markers).addTo(map);
+        $('div#container0').addClass("inFocus");
         $('#contents').append("<div class='space-at-the-bottom'><a href='#space-at-the-top'><i class='fa fa-chevron-up'></i></br><small>Top</small></a></div>");
-        map.fitBounds(geojson.getBounds());
-        geojson.addTo(map);
     });
 }
 
